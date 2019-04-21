@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: ua.pt.meteorologyapi.MeteorologyApiApplicationTests
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.697 s - in ua.pt.meteorologyapi.MeteorologyApiApplicationTests
