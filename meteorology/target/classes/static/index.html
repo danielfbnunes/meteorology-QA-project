@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    </head>
+    <script type="text/javascript">
+
+        var weatherTypes = {};
+        var windTypes = {};
+        var forecast = {};
+
+        function fillCitiesAndDays(){
+            var select1 = document.getElementById("start_day");
+            var select2 = document.getElementById("end_day");
+
+            $.ajax({ 
+                type: 'GET', 
+                url: 'http://localhost:8080/get_local_data/Aveiro/0/4',
+                dataType: 'json',
+                success: function (data) {
+                    for (var i = 0; i < data.length; i++){
+                        forecast[i] = data[i].forecastDate;
+                        var opt = document.createElement('option');
+                        opt.value = i;
+                        opt.innerHTML = data[i].forecastDate;
+                        select1.appendChild(opt);
+                        var opt = document.createElement('option');
+                        opt.value = i;
+                        opt.innerHTML = data[i].forecastDate;
+                        if (i==4){
+                            opt.selected = true;
+                        }
+                        select2.appendChild(opt);
+                    }
+                }
+            });
+
+            $.ajax({ 
+                type: 'GET', 
+                url: "http://localhost:8080/all_cities",
+                dataType: 'json',
+                success: function (data) {
+                    //Sort without accents
+                    data.sort((a, b) => a.localeCompare(b));
+                    var select = document.getElementById("select_city");
+                    for (var i = 0; i < data.length; i++){
+                        var opt = document.createElement('option');
+                        opt.value = data[i];
+                        opt.innerHTML = data[i];
+                        select.appendChild(opt);
+                    }
+                }
+            });
+
+            $.ajax({ 
+                type: 'GET', 
+                url: "http://localhost:8080/weatherTypes",
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data, function(key, value){
+                        weatherTypes[key] = value;
+                    });
+                }
+            });
+
+            $.ajax({ 
+                type: 'GET', 
+                url: "http://localhost:8080/windTypes",
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data, function(key, value){
+                        windTypes[key] = value;
+                    });
+                }
+            });
+
+        }
+
+        function getval(start_val){
+            var select2 = document.getElementById("end_day");
+            $('#end_day').find('option').remove();
+
+            for (var i = start_val; i < 5; i++){
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.innerHTML = forecast[i];
+                if (i == 4) opt.selected = true;
+                select2.appendChild(opt);
+            }
+        }
+
+        function getImgUrl(weatherType){
+            if (weatherType == 6 || weatherType == 7 || weatherType == 9 || weatherType == 10 || weatherType == 12 || weatherType == 13 || weatherType == 15) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Cloud_Snowing_Cloud_Climate-512.png";
+                //heavy rain
+            else if (weatherType == 8 || weatherType == 11 || weatherType == 14) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Heavy_Rain_Cloud_Climate-512.png";
+                //sunny
+            else if (weatherType == 1 ) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Hot_Sun_Day-512.png";
+                //clouds
+            else if (weatherType == 4 || weatherType == 5 || weatherType == 24 || weatherType == 25 || weatherType == 27) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Cloudy_Season_Cloud-512.png";
+                //partly cloudy
+            else if (weatherType == 2 || weatherType == 3) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Sunny_Sun_Cloudy-512.png";
+                //mist
+            else if (weatherType == 16 || weatherType == 17 || weatherType == 26) url = "https://cdn4.iconfinder.com/data/icons/the-weather-is-nice-today/64/weather_49-512.png";
+                //snow
+            else if (weatherType == 18 || weatherType == 21 || weatherType == 22) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Flake_Flakes_Snowflake-512.png";
+                //storm
+            else if (weatherType == 19 || weatherType == 20 || weatherType == 23) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Lightning_Cloud_Storm-512.png";
+            else url = "https://cdn4.iconfinder.com/data/icons/evil-icons-user-interface/64/close2-512.png";
+            return url;
+        }
+
+        function getWeatherDesc(weatherType){
+            
+        }
+        
+        function getResultFromApi(){
+            var select_city = document.getElementById('select_city');
+            var start_day = document.getElementById('start_day');
+            var end_day = document.getElementById('end_day');
+            var meteorology_div = document.getElementById('meteorology_div');
+            meteorology_div.innerHTML = '';
+            var title = document.createElement('h2');
+            var black = document.createElement('b');
+            var text = document.createTextNode(select_city.options[select_city.selectedIndex].value);
+            black.appendChild(text);
+            title.appendChild(black);
+            meteorology_div.appendChild(title);
+            $.ajax({ 
+                type: 'GET', 
+                url: 'http://localhost:8080/get_local_data/' + select_city.options[select_city.selectedIndex].value + "/" + start_day.options[start_day.selectedIndex].value + "/" + end_day.options[end_day.selectedIndex].value,
+                dataType: 'json',
+                success: function (data) {
+                    for (var i = 0; i < data.length; i++){
+                        var img_url = getImgUrl(data[i].idWeatherType);
+                        var main_div = document.createElement('div');
+                        
+                        if(i==0){
+                            switch (data.length){
+                                case 1:
+                                    main_div.className = "col-md-offset-5 col-md-2 media";
+                                    break;
+                                case 2:
+                                    main_div.className = "col-md-offset-4 col-md-2 media";
+                                    break;
+                                case 3:
+                                    main_div.className = "col-md-offset-3 col-md-2 media";
+                                    break;
+                                case 4:
+                                    main_div.className = "col-md-offset-2 col-md-2 media";
+                                    break;
+                                case 5:
+                                    main_div.className = "col-md-offset-1 col-md-2 media";
+                                    break;
+                            }
+                        }
+                        else main_div.className = "col-md-2 media";
+                        main_div.style.marginTop = "2%";
+                        main_div.style.textAlign = "center";
+
+                        var title = document.createElement('h4');
+                        var black = document.createElement('b');
+                        var text = document.createTextNode(data[i].forecastDate);
+                        black.appendChild(text);
+                        title.appendChild(black);
+                        main_div.appendChild(title);
+
+                        var image_div = document.createElement('div');
+                        image_div.className = "media-top";
+                        var img = document.createElement('img');
+                        img.style.width = "150px";
+                        img.style.marginLeft = "auto";
+                        img.style.marginRight = "auto";
+                        img.className = "media-object";
+                        img.src = img_url;
+                        image_div.appendChild(img);
+                        main_div.appendChild(image_div);
+                        var body_div = document.createElement('div');
+                        body_div.className = "media-body";
+                        var title = document.createElement('h4');
+                        var black = document.createElement('b');
+                        title.className = "media-heading";
+                        var text = document.createTextNode(weatherTypes[data[i].idWeatherType].toUpperCase());
+                        black.appendChild(text);
+                        title.appendChild(black);
+                        body_div.appendChild(title);
+                        var br = document.createElement('br');
+                        body_div.appendChild(br);
+                        var p = document.createElement('p');
+                        var t = document.createTextNode('T MIN: ');
+                        p.appendChild(t);
+                        var black = document.createElement('b');
+                        var t = document.createTextNode(data[i].tMin.toUpperCase() + ' ºC');
+                        black.appendChild(t);
+                        p.appendChild(black);
+                        body_div.appendChild(p);
+                        var p = document.createElement('p');
+                        var t = document.createTextNode('T MAX: ');
+                        p.appendChild(t);
+                        var black = document.createElement('b');
+                        var t = document.createTextNode(data[i].tMax.toUpperCase() + ' ºC');
+                        black.appendChild(t);
+                        p.appendChild(black);
+                        body_div.appendChild(p);
+                        var p = document.createElement('p');
+                        var t = document.createTextNode('WIND: ');
+                        p.appendChild(t);
+                        var black = document.createElement('b');
+                        var t = document.createTextNode(windTypes[data[i].classWindSpeed].toUpperCase() + " (" + data[i].predWindDir + ")");
+                        black.appendChild(t);
+                        p.appendChild(black);
+                        body_div.appendChild(p);
+                        var p = document.createElement('p');
+                        var t = document.createTextNode('RAIN PROB: ');
+                        p.appendChild(t);
+                        var black = document.createElement('b');
+                        var t = document.createTextNode(data[i].precipitaProb.toUpperCase() + " %");
+                        black.appendChild(t);
+                        p.appendChild(black);
+                        body_div.appendChild(p);
+
+                        main_div.appendChild(body_div);
+                        meteorology_div.append(main_div);
+                    }
+                }
+            });
+        }
+
+        /** 
+        <div class="col-md-offset-1 col-md-10 media" style="margin-top: 5%">
+            <div class="media-top">
+                <img style="width:150px; margin-left: auto; margin-right: auto; " src="https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Hot_Sun_Day-512.png" class="media-object">
+            </div>
+            <div class="media-body">
+                <h4 class="media-heading">Left-aligned</h4>
+                <br />
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+        </div>
+        **/                
+    </script>
+    <body onload="fillCitiesAndDays()" style="height: 100%; background-color: #e5eefc">
+            <div class="col-md-12" style="text-align: center;">
+                <h1><b>TQS - Meteorology</b></h1>
+            </div>
+            <div class="col-md-12" style="margin-top: 5%">
+                <div class="col-md-offset-1 col-md-10">
+                    <div class="col-md-offset-3 col-md-2" style="text-align:center">
+                        <label disabled class="form-control">CHOOSE CITY :</label>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="select_city" style="text-align:center" class="form-control">
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12" style="margin-top: 2%">
+                <div class="col-md-offset-1 col-md-11">
+                    <div class="col-md-offset-1 col-md-2" style="text-align:center">
+                        <label disabled class="form-control">START DAY :</label>
+                    </div>
+                    <div class="col-md-2">
+                        <select onchange="getval(this.value);" id="start_day" style="text-align:center" class="form-control">
+                        </select>
+                    </div>
+                    <div class="col-md-2" style="text-align:center">
+                        <label disabled class="form-control">END DAY :</label>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="end_day" style="text-align:center" class="form-control">
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12" style="margin-top: 2%; text-align: center">
+                <button onclick="getResultFromApi()" class="btn btn-success"><b>Get Previsions</b></button>
+            </div>
+
+            <div id="meteorology_div" style="text-align: center; margin-top: 2%" class="col-md-12">
+            </div>
+    </body>
+</html>
