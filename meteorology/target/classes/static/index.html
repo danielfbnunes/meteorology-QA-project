@@ -16,10 +16,10 @@
         function fillCitiesAndDays(){
             var select1 = document.getElementById("start_day");
             var select2 = document.getElementById("end_day");
-
+            
             $.ajax({ 
                 type: 'GET', 
-                url: 'http://localhost:8080/get_local_data/Aveiro/0/4',
+                url: 'http://localhost:8080/get_local_data/Angra%20do%20Hero%C3%ADsmo/0/4',
                 dataType: 'json',
                 success: function (data) {
                     for (var i = 0; i < data.length; i++){
@@ -38,7 +38,7 @@
                     }
                 }
             });
-
+            
             $.ajax({ 
                 type: 'GET', 
                 url: "http://localhost:8080/all_cities",
@@ -80,6 +80,12 @@
 
         }
 
+        $(document).ready(function(){
+            setTimeout(function(){
+                $('#getPrev').click();
+            }, 500);
+        });
+
         function getval(start_val){
             var select2 = document.getElementById("end_day");
             $('#end_day').find('option').remove();
@@ -111,10 +117,6 @@
             else if (weatherType == 19 || weatherType == 20 || weatherType == 23) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Lightning_Cloud_Storm-512.png";
             else url = "https://cdn4.iconfinder.com/data/icons/evil-icons-user-interface/64/close2-512.png";
             return url;
-        }
-
-        function getWeatherDesc(weatherType){
-            
         }
         
         function getResultFromApi(){
@@ -276,7 +278,7 @@
                 </div>
             </div>
             <div class="col-md-12" style="margin-top: 2%; text-align: center">
-                <button onclick="getResultFromApi()" class="btn btn-success"><b>Get Previsions</b></button>
+                <button onclick="getResultFromApi()" id="getPrev" class="btn btn-success"><b>Get Previsions</b></button>
             </div>
 
             <div id="meteorology_div" style="text-align: center; margin-top: 2%" class="col-md-12">
