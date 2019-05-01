@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ua.pt.meteorology;
 
 import com.google.gson.Gson;
@@ -16,6 +11,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +28,11 @@ import org.springframework.web.client.RestTemplate;
 @CrossOrigin(origins = "*")
 public class MeteorologyResources {
     
-    private static int numberOfRequests = 0, hits = 0, misses = 0;
+    static final Logger logger = LoggerFactory.getLogger(MeteorologyResources.class);
+    
+    private static int numberOfRequests = 0;
+    private static int hits = 0;
+    private static int misses = 0;
     
     private static Map<String, Long> location2globalId;
     
@@ -47,6 +48,19 @@ public class MeteorologyResources {
         return location2globalId;
     }
     
+    public static void insertNewLocation(Map<String, Object> temp){
+        try {
+            numberOfRequests++;
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.getForObject("http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/" + (Long) temp.get("globalIdLocal") + ".json", String.class);
+            location2globalId.put((String) temp.get("local"), (Long) temp.get("globalIdLocal"));
+            hits++;
+        }catch(HttpClientErrorException e){
+            logger.info("Can't request from this city: {}", (String) temp.get("local"));
+            misses++;
+        }
+    }
+    
     public static void globalIdData() throws ParseException{
         location2globalId = new HashMap<>();
         try{
@@ -59,57 +73,46 @@ public class MeteorologyResources {
             JSONObject json = (JSONObject) parser.parse(result);
             for (Object obj : (JSONArray) json.get("data")){
                 Map<String,Object> temp = (Map<String,Object>) obj;
-                try {
-                    numberOfRequests++;
-                    restTemplate.getForObject("http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/" + (Long) temp.get("globalIdLocal") + ".json", String.class);
-                    location2globalId.put((String) temp.get("local"), (Long) temp.get("globalIdLocal"));
-                    hits++;
-                }catch(HttpClientErrorException e){
-                    //System.err.println("Can't request from this city: " + (String) temp.get("local"));
-                    misses++;
-                }
-
+                insertNewLocation(temp);
             }
         }catch(HttpClientErrorException e){
             misses++;
+        }
+    }
+    
+    public static JSONObject getJsonFromApi(String uri) throws ParseException{
+        numberOfRequests++;
+        try{
+            RestTemplate restTemplate = new RestTemplate();
+            String result = restTemplate.getForObject(uri, String.class);
+            hits++;
+            JSONParser parser = new JSONParser();
+            return (JSONObject) parser.parse(result);
+        }catch(HttpClientErrorException e){
+            misses++;
+            return null;
         }
     }
     
     public static void windType() throws ParseException{
         windType2description = new HashMap<>();
-        numberOfRequests++;
-        try{
-            final String uri = "http://api.ipma.pt/open-data/wind-speed-daily-classe.json";
-            RestTemplate restTemplate = new RestTemplate();
-            String result = restTemplate.getForObject(uri, String.class);
-            hits++;
-            JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse(result);
+        JSONObject json = getJsonFromApi("http://api.ipma.pt/open-data/wind-speed-daily-classe.json");
+        if (json != null){
             for (Object obj : (JSONArray) json.get("data")){
                 Map<String,Object> temp = (Map<String,Object>) obj;
                 windType2description.put(Long.parseLong((String) temp.get("classWindSpeed")), (String) temp.get("descClassWindSpeedDailyEN"));
             }
-        }catch(HttpClientErrorException e){
-            misses++;
         }
     }
     
     public static void weatherType() throws ParseException{
         weatherType2description = new HashMap<>();
-        numberOfRequests++;
-        try{
-            final String uri = "http://api.ipma.pt/open-data/weather-type-classe.json";
-            RestTemplate restTemplate = new RestTemplate();
-            String result = restTemplate.getForObject(uri, String.class);
-            hits++;
-            JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse(result);
+        JSONObject json = getJsonFromApi("http://api.ipma.pt/open-data/weather-type-classe.json");
+        if (json != null){
             for (Object obj : (JSONArray) json.get("data")){
                 Map<String,Object> temp = (Map<String,Object>) obj;
                 weatherType2description.put((Long) temp.get("idWeatherType"), (String) temp.get("descIdWeatherTypeEN"));
             }
-        }catch(HttpClientErrorException e){
-            misses++;
         }
     }
     
@@ -164,19 +167,17 @@ public class MeteorologyResources {
     }
     
     @GetMapping("get_local_data/{local}/{first_day}/{last_day}")
-    public Object getLocalData(@PathVariable("local") final String name, @PathVariable("first_day") final int first_day, @PathVariable("last_day") final int last_day) throws ParseException {
+    public static Object getLocalData(@PathVariable("local") final String name, @PathVariable("first_day") final int first_day, @PathVariable("last_day") final int last_day) throws ParseException {
         //days must be in [0-4]
         if ((!(0 <= first_day && first_day <= 4)) || (!(0 <= last_day && last_day <= 4))){
             JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse("{\"Error\" : \"The number of days must be contained in [0-4]\"}");
-            return json;
+            return parser.parse("{\"Error\" : \"The number of days must be contained in [0-4]\"}");
         }
         
         //last day must be bigger or equal to the first day
         if (first_day > last_day){
             JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse("{\"Error\" : \"Last day must be bigger or equal to the first day\"}");
-            return json;
+            return parser.parse("{\"Error\" : \"Last day must be bigger or equal to the first day\"}");
         }
         
         //get global id of location passed as argument
@@ -192,7 +193,7 @@ public class MeteorologyResources {
             
             //go to local cache and try to get the response from there
             if (localCache.containsKey(name)){
-                System.out.println("[" + name + "] CACHE");
+                logger.info("[{}] CACHE ", name);
                 
                 Map<String, Object> temp = new HashMap<>();
                 temp.put("data", ((ArrayList) localCache.get(name)).toArray());
@@ -206,7 +207,7 @@ public class MeteorologyResources {
                 result = restTemplate.getForObject(uri, String.class);
                 hits++;
                 
-                System.out.println("[" + name + "] API : (req-" + numberOfRequests + " ; hits-" + hits + " ; misses-" + misses + ")");
+                logger.info("[{}] API : (req-{} ; hits-{} ; misses-{})", name, numberOfRequests, hits, misses);
 
                 //save in local cache
                 Map<String, Object> mapObj = new Gson().fromJson(result, new TypeToken<HashMap<String, Object>>() {}.getType());
@@ -237,8 +238,7 @@ public class MeteorologyResources {
         catch(HttpClientErrorException e){
             misses++;
             JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
-            return json;
+            return parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
         }
         
     }
