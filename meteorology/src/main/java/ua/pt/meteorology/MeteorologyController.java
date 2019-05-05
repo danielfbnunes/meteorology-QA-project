@@ -1,8 +1,8 @@
 package ua.pt.meteorology;
 
-import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.client.RestTemplate;
 
 /**
  *
@@ -12,12 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class MeteorologyController {
         
     @GetMapping("meteorology")
-    public String showIndexPage() throws ParseException{
-        //get global id of location passed as argument
-        if (MeteorologyResources.getLocation2globalId() == null || MeteorologyResources.getWeatherType2description() == null){
-            MeteorologyResources.globalIdData();
-            MeteorologyResources.weatherType();
-        }
+    public String showIndexPage() {
+        new RestTemplate().getForObject("http://localhost:8080/meteorologyInit", String.class);
         return "index.html";
     }
 }
