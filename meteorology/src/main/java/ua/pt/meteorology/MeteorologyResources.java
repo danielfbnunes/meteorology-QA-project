@@ -39,7 +39,10 @@ public class MeteorologyResources {
     static final String CITIES_BASE_URL = "http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/";
     static final String URL_TERMINATION = ".json";
     
-    private Map<String, Long> location2globalId;
+    static final String DARK_SKY = "https://api.darksky.net/forecast/7f01ccfd2bda82f95d5930bcb54a4dac/";
+    static final String DARK_SKY_TERMINATION = "?exclude=currently,flags,minutely,hourly,alerts";
+    
+    private Map<String, Object[]> location2globalId;
     
     private Map<Long, String> weatherType2description;
     
@@ -57,7 +60,7 @@ public class MeteorologyResources {
         return windType2description;
     }
        
-    public Map<String, Long> getLocation2globalId() {
+    public Map<String, Object[]> getLocation2globalId() {
         return location2globalId;
     }
 
@@ -84,7 +87,8 @@ public class MeteorologyResources {
                 Map<String,Object> temp = (Map<String,Object>) obj;
                 numberOfRequests++;
                 if (externalApi.testConnection(CITIES_BASE_URL + (Long) temp.get("globalIdLocal") + URL_TERMINATION)){
-                    location2globalId.put((String) temp.get("local"), (Long) temp.get("globalIdLocal"));
+                    Object[] globalIdAndLatLong = new Object[] {(Long) temp.get("globalIdLocal"), Float.parseFloat((String) temp.get("latitude")), Float.parseFloat((String) temp.get("longitude"))};
+                    location2globalId.put((String) temp.get("local"), globalIdAndLatLong);
                     hits++;
                 }else{
                     logger.info("Can't request from this city: {}", (String) temp.get("local"));
@@ -207,28 +211,36 @@ public class MeteorologyResources {
         }else{
             numberOfRequests++;
             
-            if (externalApi.testConnection(CITIES_BASE_URL + location2globalId.get(name) + URL_TERMINATION)){
+            if (externalApi.testConnection(CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION)){
                 //cal impa api and get result in a String
-                result = externalApi.getStringFromApi(CITIES_BASE_URL + location2globalId.get(name) + URL_TERMINATION);
-                hits++;
-
-                logger.info("[{}] API : (req-{} ; hits-{} ; misses-{})", name, numberOfRequests, hits, misses);
-                //save in local cache
-                Map<String, Object> mapObj = new Gson().fromJson(result, new TypeToken<HashMap<String, Object>>() {}.getType());
-                localCache.put(name, mapObj.get("data"));
-
-                //time to live
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                  @Override
-                  public void run() {
-                     localCache.remove(name);
-                  }
-                }, 30000);  
+                result = externalApi.getStringFromApi(CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION);
             }else{
-                JSONParser parser = new JSONParser();
-                return parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
+                String tempUrl = DARK_SKY + location2globalId.get(name)[1] + "," + location2globalId.get(name)[2] + "," + (System.currentTimeMillis() / 1000) + DARK_SKY_TERMINATION;
+                if(externalApi.testConnection(tempUrl)){
+                    result = externalApi.getStringFromAlternativeApi(DARK_SKY + location2globalId.get(name)[1] + "," + location2globalId.get(name)[2] + ",", DARK_SKY_TERMINATION);
+                }else{
+                    misses++;
+                    JSONParser parser = new JSONParser();
+                    return parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
+                }
             }
+                            
+            hits++;
+
+            logger.info("[{}] API : (req-{} ; hits-{} ; misses-{})", name, numberOfRequests, hits, misses);
+            //save in local cache
+            Map<String, Object> mapObj = new Gson().fromJson(result, new TypeToken<HashMap<String, Object>>() {}.getType());
+            localCache.put(name, mapObj.get("data"));
+
+            //time to live
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+              @Override
+              public void run() {
+                 localCache.remove(name);
+              }
+            }, 30000);  
+            
         }
                
         //create api's response in json
@@ -240,6 +252,8 @@ public class MeteorologyResources {
         for (int i = first_day; i <= last_day; i++){
             jArray.add(((JSONArray) json.get("data")).get(i));
         }
+        
+        System.out.println(jArray);
 
         return jArray;
     }

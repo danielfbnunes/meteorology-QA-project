@@ -12,32 +12,46 @@
         var weatherTypes = {};
         var windTypes = {};
         var forecast = {};
-
+        
+        function zeroPad(num, places) {
+            var zero = places - num.toString().length + 1;
+            return Array(+(zero > 0 && zero)).join("0") + num;
+        }
+        
         function fillCitiesAndDays(){
             var select1 = document.getElementById("start_day");
             var select2 = document.getElementById("end_day");
             
-            $.ajax({ 
-                type: 'GET', 
-                url: 'http://localhost:8080/get_local_data/Angra%20do%20Hero%C3%ADsmo/0/4',
-                dataType: 'json',
-                success: function (data) {
-                    for (var i = 0; i < data.length; i++){
-                        forecast[i] = data[i].forecastDate;
-                        var opt = document.createElement('option');
-                        opt.value = i;
-                        opt.innerHTML = data[i].forecastDate;
-                        select1.appendChild(opt);
-                        var opt = document.createElement('option');
-                        opt.value = i;
-                        opt.innerHTML = data[i].forecastDate;
-                        if (i==4){
-                            opt.selected = true;
-                        }
-                        select2.appendChild(opt);
+            var today = new Date();
+            var tomorrow = new Date();
+            tomorrow.setDate(today.getDate()+1);
+            for (var i = 0; i < 5; i++){
+                if (i == 0 ){
+                    forecast[i] = today.getFullYear()+'-'+zeroPad((today.getMonth()+1),2)+'-'+zeroPad(today.getDate(),2);
+                    var opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerHTML = forecast[i];
+                    select1.appendChild(opt);
+                    var opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerHTML = forecast[i];
+                }else{
+                    forecast[i] = tomorrow.getFullYear()+'-'+zeroPad((tomorrow.getMonth()+1),2)+'-'+zeroPad(tomorrow.getDate(),2);
+                    var opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerHTML = forecast[i];
+                    select1.appendChild(opt);
+                    var opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerHTML = forecast[i];
+                    if (i==4){
+                        opt.selected = true;
                     }
+                    tomorrow.setDate(tomorrow.getDate()+1);
                 }
-            });
+                select2.appendChild(opt);
+            }
+            
             
             $.ajax({ 
                 type: 'GET', 
@@ -100,6 +114,7 @@
         }
 
         function getImgUrl(weatherType){
+                //rain
             if (weatherType == 6 || weatherType == 7 || weatherType == 9 || weatherType == 10 || weatherType == 12 || weatherType == 13 || weatherType == 15) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Cloud_Snowing_Cloud_Climate-512.png";
                 //heavy rain
             else if (weatherType == 8 || weatherType == 11 || weatherType == 14) url = "https://cdn2.iconfinder.com/data/icons/weather-and-forecast-free/32/Weather_Weather_Forecast_Heavy_Rain_Cloud_Climate-512.png";
@@ -195,7 +210,7 @@
                         var t = document.createTextNode('T MIN: ');
                         p.appendChild(t);
                         var black = document.createElement('b');
-                        var t = document.createTextNode(data[i].tMin.toUpperCase() + ' ºC');
+                        var t = document.createTextNode(data[i].tMin + ' ºC');
                         black.appendChild(t);
                         p.appendChild(black);
                         body_div.appendChild(p);
@@ -203,7 +218,7 @@
                         var t = document.createTextNode('T MAX: ');
                         p.appendChild(t);
                         var black = document.createElement('b');
-                        var t = document.createTextNode(data[i].tMax.toUpperCase() + ' ºC');
+                        var t = document.createTextNode(data[i].tMax + ' ºC');
                         black.appendChild(t);
                         p.appendChild(black);
                         body_div.appendChild(p);
@@ -211,7 +226,11 @@
                         var t = document.createTextNode('WIND: ');
                         p.appendChild(t);
                         var black = document.createElement('b');
-                        var t = document.createTextNode(windTypes[data[i].classWindSpeed].toUpperCase() + " (" + data[i].predWindDir + ")");
+                        try {
+                            var t = document.createTextNode(windTypes[data[i].classWindSpeed].toUpperCase() + " (" + data[i].predWindDir + ")");
+                        }catch(e){
+                            var t = document.createTextNode(data[i].windVel + " m/s");
+                        }
                         black.appendChild(t);
                         p.appendChild(black);
                         body_div.appendChild(p);
@@ -219,7 +238,7 @@
                         var t = document.createTextNode('RAIN PROB: ');
                         p.appendChild(t);
                         var black = document.createElement('b');
-                        var t = document.createTextNode(data[i].precipitaProb.toUpperCase() + " %");
+                        var t = document.createTextNode(data[i].precipitaProb + " %");
                         black.appendChild(t);
                         p.appendChild(black);
                         body_div.appendChild(p);
@@ -229,6 +248,7 @@
                     }
                 }
             });
+            
         }
 
         /** 

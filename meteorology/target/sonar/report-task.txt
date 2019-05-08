@@ -1,6 +1,0 @@
-projectKey=ua.pt:meteorology
-serverUrl=http://localhost:9000
-serverVersion=7.7.0.23042
-dashboardUrl=http://localhost:9000/dashboard?id=ua.pt%3Ameteorology
-ceTaskId=AWqIrhDvjg3T4AZAdA1d
-ceTaskUrl=http://localhost:9000/api/ce/task?id=AWqIrhDvjg3T4AZAdA1d
