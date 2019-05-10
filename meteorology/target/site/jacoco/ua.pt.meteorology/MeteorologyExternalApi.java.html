@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MeteorologyExternalApi.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">meteorology</a> &gt; <a href="index.source.html" class="el_package">ua.pt.meteorology</a> &gt; <span class="el_source">MeteorologyExternalApi.java</span></div><h1>MeteorologyExternalApi.java</h1><pre class="source lang-java linenums">package ua.pt.meteorology;
+
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.Date;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+
+/**
+ *
+ * @author dn
+ */
+<span class="fc" id="L19">public class MeteorologyExternalApi {</span>
+    
+    private static final String WEATHERTYPE = &quot;idWeatherType&quot;; 
+    
+    public boolean testConnection(String uri){
+        try {
+<span class="fc" id="L25">            new RestTemplate().getForObject(uri, String.class);</span>
+<span class="fc" id="L26">            return true;</span>
+<span class="fc" id="L27">        }catch (HttpClientErrorException e){</span>
+<span class="fc" id="L28">            return false;</span>
+        }
+    }
+    
+    public JSONObject getJSONObjectFromApi(String uri) throws ParseException{
+<span class="fc" id="L33">        String result = new RestTemplate().getForObject(uri, String.class);</span>
+<span class="fc" id="L34">        JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L35">        return (JSONObject) parser.parse(result);</span>
+
+    }
+    
+    public String getStringFromApi(String uri) {
+<span class="fc" id="L40">        return new RestTemplate().getForObject(uri, String.class);</span>
+    }
+    
+    public String getStringFromAlternativeApi(String uri, long time, String termination) throws ParseException{
+<span class="fc" id="L44">        JSONObject js = new JSONObject();</span>
+<span class="fc" id="L45">        js.put(&quot;data&quot;, new JSONArray());</span>
+<span class="fc" id="L46">        Calendar calendar = Calendar.getInstance();</span>
+        LocalDate localDate;
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        for (int i = 0; i &lt;= 5; i++){</span>
+<span class="fc" id="L49">            JSONObject jsObj = getJSONObjectFromApi(uri + (time + (i * 86400)) + termination);</span>
+<span class="fc" id="L50">            JSONObject jsonFinal = null;</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">            if (i==0){</span>
+<span class="fc" id="L52">                localDate = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L53">                jsonFinal = parseJSON2TypeRequired((JSONObject) (((JSONArray)((JSONObject)jsObj.get(&quot;daily&quot;)).get(&quot;data&quot;)).get(0)), &quot;&quot;+(localDate.getYear())+'-'+String.format(&quot;%02d&quot;, (localDate.getMonthValue()))+'-'+String.format(&quot;%02d&quot;, (localDate.getDayOfMonth())));            </span>
+            }else{
+<span class="fc" id="L55">                calendar.add(Calendar.DAY_OF_YEAR, 1);</span>
+<span class="fc" id="L56">                localDate = calendar.getTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L57">                jsonFinal = parseJSON2TypeRequired((JSONObject) (((JSONArray)((JSONObject)jsObj.get(&quot;daily&quot;)).get(&quot;data&quot;)).get(0)), &quot;&quot;+(localDate.getYear())+'-'+String.format(&quot;%02d&quot;, (localDate.getMonthValue()))+'-'+String.format(&quot;%02d&quot;, (localDate.getDayOfMonth())));</span>
+            }
+<span class="fc" id="L59">            ((JSONArray) js.get(&quot;data&quot;)).add(jsonFinal);</span>
+        }
+        
+<span class="fc" id="L62">        return js.toJSONString();        </span>
+    }
+    
+    public JSONObject parseJSON2TypeRequired(JSONObject jsonInicial, String data){
+<span class="fc" id="L66">        JSONObject jsonFinal = new JSONObject();</span>
+<span class="fc" id="L67">        jsonFinal.put(&quot;forecastDate&quot;, data);</span>
+        
+<span class="fc" id="L69">        String icon = (String) jsonInicial.get(&quot;icon&quot;);</span>
+        
+<span class="fc" id="L71">        jsonFinal.put(WEATHERTYPE, getWeatherTypeFromIcon(icon));</span>
+        
+<span class="fc" id="L73">        DecimalFormat df = new DecimalFormat(&quot;#.#&quot;);</span>
+<span class="fc" id="L74">        jsonFinal.put(&quot;tMin&quot;, df.format((((Double)jsonInicial.get(&quot;temperatureMin&quot;))-32)/1.8));</span>
+<span class="fc" id="L75">        jsonFinal.put(&quot;tMax&quot;, df.format((((Double)jsonInicial.get(&quot;temperatureMax&quot;))-32)/1.8));</span>
+<span class="fc" id="L76">        jsonFinal.put(&quot;windVel&quot;, jsonInicial.get(&quot;windSpeed&quot;));</span>
+<span class="fc" id="L77">        jsonFinal.put(&quot;precipitaProb&quot;, df.format(Double.parseDouble(&quot;&quot;+ jsonInicial.get(&quot;precipProbability&quot;))*100));</span>
+<span class="fc" id="L78">        return jsonFinal;</span>
+    }
+    
+    public int getWeatherTypeFromIcon(String icon){
+<span class="fc bfc" id="L82" title="All 4 branches covered.">        if (icon.equals(&quot;clear-day&quot;) || icon.equals(&quot;clear-night&quot;)) return 1;</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        else if (icon.equals(&quot;rain&quot;)) return 6;</span>
+<span class="fc bfc" id="L84" title="All 4 branches covered.">        else if (icon.equals(&quot;snow&quot;) || icon.equals(&quot;sleet&quot;)) return 18;</span>
+<span class="fc bfc" id="L85" title="All 4 branches covered.">        else if (icon.equals(&quot;wind&quot;) || icon.equals(&quot;fog&quot;)) return 16;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        else if (icon.equals(&quot;cloudy&quot;)) return 4;</span>
+<span class="fc bfc" id="L87" title="All 4 branches covered.">        else if (icon.equals(&quot;partly-cloudy-day&quot;) || icon.equals(&quot;partly-cloudy-night&quot;)) return 2;</span>
+<span class="fc" id="L88">        else return -99;</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

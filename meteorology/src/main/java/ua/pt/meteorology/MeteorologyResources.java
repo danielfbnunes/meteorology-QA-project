@@ -36,6 +36,9 @@ public class MeteorologyResources {
     private int hits = 0;
     private int misses = 0;
     
+    static final String CLASSWINDSPEED = "classWindSpeed";
+    static final String IDWEATHERTYPE = "idWeatherType";
+    static final String CLASSPRECINT = "classPrecInt";
     static final String CITIES_BASE_URL = "http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/";
     static final String URL_TERMINATION = ".json";
     
@@ -105,7 +108,7 @@ public class MeteorologyResources {
         if (json != null){
             for (Object obj : (JSONArray) json.get("data")){
                 Map<String,Object> temp = (Map<String,Object>) obj;
-                windType2description.put(Long.parseLong((String) temp.get("classWindSpeed")), (String) temp.get("descClassWindSpeedDailyEN"));
+                windType2description.put(Long.parseLong((String) temp.get(CLASSWINDSPEED)), (String) temp.get("descClassWindSpeedDailyEN"));
             }
         }
     }
@@ -116,13 +119,13 @@ public class MeteorologyResources {
         if (json != null){
             for (Object obj : (JSONArray) json.get("data")){
                 Map<String,Object> temp = (Map<String,Object>) obj;
-                weatherType2description.put((Long) temp.get("idWeatherType"), (String) temp.get("descIdWeatherTypeEN"));
+                weatherType2description.put((Long) temp.get(IDWEATHERTYPE), (String) temp.get("descIdWeatherTypeEN"));
             }
         }
     }
         
     @GetMapping("all_cities")
-    public Object getAllCities() throws ParseException{
+    public JSONArray getAllCities() throws ParseException{
         //get global id of location passed as argument
         if (location2globalId == null){
             globalIdData();
@@ -138,7 +141,7 @@ public class MeteorologyResources {
     }
     
     @GetMapping("weatherTypes")
-    public Object getWeatherDesc() throws ParseException{
+    public JSONObject getWeatherDesc() throws ParseException{
         //get global id of location passed as argument
         if (weatherType2description == null){
             weatherType();
@@ -154,7 +157,7 @@ public class MeteorologyResources {
     }
     
     @GetMapping("windTypes")
-    public Object getWindDesc() throws ParseException{
+    public JSONObject getWindDesc() throws ParseException{
         //get global id of location passed as argument
         if (windType2description == null){
             windType();
@@ -197,7 +200,6 @@ public class MeteorologyResources {
             windType();
         }
         
-
         String result;
 
         //go to local cache and try to get the response from there
@@ -208,21 +210,22 @@ public class MeteorologyResources {
             temp.put("data", ((ArrayList) localCache.get(name)).toArray());
             Gson gson = new Gson(); 
             result = gson.toJson(temp);
+        
         }else{
-            numberOfRequests++;
             
-            if (externalApi.testConnection(CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION)){
+            if (!location2globalId.containsKey(name)){
+                JSONParser parser = new JSONParser();
+                return parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
+            }
+            
+            numberOfRequests++;
+            String firstApi = CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION;
+            
+            if (externalApi.testConnection(firstApi)){
                 //cal impa api and get result in a String
-                result = externalApi.getStringFromApi(CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION);
+                result = externalApi.getStringFromApi(firstApi);            
             }else{
-                String tempUrl = DARK_SKY + location2globalId.get(name)[1] + "," + location2globalId.get(name)[2] + "," + (System.currentTimeMillis() / 1000) + DARK_SKY_TERMINATION;
-                if(externalApi.testConnection(tempUrl)){
-                    result = externalApi.getStringFromAlternativeApi(DARK_SKY + location2globalId.get(name)[1] + "," + location2globalId.get(name)[2] + ",", DARK_SKY_TERMINATION);
-                }else{
-                    misses++;
-                    JSONParser parser = new JSONParser();
-                    return parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
-                }
+                result = externalApi.getStringFromAlternativeApi(DARK_SKY + location2globalId.get(name)[1] + "," + location2globalId.get(name)[2] + ",", (System.currentTimeMillis() / 1000), DARK_SKY_TERMINATION);
             }
                             
             hits++;
@@ -230,7 +233,7 @@ public class MeteorologyResources {
             logger.info("[{}] API : (req-{} ; hits-{} ; misses-{})", name, numberOfRequests, hits, misses);
             //save in local cache
             Map<String, Object> mapObj = new Gson().fromJson(result, new TypeToken<HashMap<String, Object>>() {}.getType());
-            localCache.put(name, mapObj.get("data"));
+            localCache.put(name, parseGSONObject(mapObj).get("data"));
 
             //time to live
             Timer timer = new Timer();
@@ -253,9 +256,17 @@ public class MeteorologyResources {
             jArray.add(((JSONArray) json.get("data")).get(i));
         }
         
-        System.out.println(jArray);
-
         return jArray;
     }
     
+    private Map<String, Object> parseGSONObject(Map<String,Object> mapObj){
+        for(int i = 0; i < ((ArrayList<Map<String, Object>>)mapObj.get("data")).size(); i++){
+            if (((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).containsKey(CLASSPRECINT)){
+                ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).put(CLASSPRECINT,((Double) ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).get(CLASSPRECINT)).intValue());
+            }
+            ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).put(IDWEATHERTYPE,((Double) ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).get(IDWEATHERTYPE)).intValue());
+            ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).put(CLASSWINDSPEED,((Double) ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).get(CLASSWINDSPEED)).intValue());
+        }
+        return mapObj;
+    }
 }

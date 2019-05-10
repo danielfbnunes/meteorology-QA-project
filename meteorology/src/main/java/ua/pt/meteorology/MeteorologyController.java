@@ -10,9 +10,14 @@ import org.springframework.web.client.RestTemplate;
  */
 @Controller
 public class MeteorologyController {
-        
+    
+    /**
+     * Interface mapping function
+     * @return Interface file name
+     */
     @GetMapping("meteorology")
     public String showIndexPage() {
+        // Get initial data from api before returnin                                                                                                                                                        g the page to the user.
         new RestTemplate().getForObject("http://localhost:8080/meteorologyInit", String.class);
         return "index.html";
     }

@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MeteorologyResources.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">meteorology</a> &gt; <a href="index.source.html" class="el_package">ua.pt.meteorology</a> &gt; <span class="el_source">MeteorologyResources.java</span></div><h1>MeteorologyResources.java</h1><pre class="source lang-java linenums">package ua.pt.meteorology;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ *
+ * @author dn
+ */
+@RestController
+@CrossOrigin(origins = &quot;*&quot;)
+<span class="fc" id="L27">public class MeteorologyResources {</span>
+    
+<span class="fc" id="L29">    private MeteorologyExternalApi externalApi = new MeteorologyExternalApi();</span>
+    
+<span class="fc" id="L31">    static final Logger logger = LoggerFactory.getLogger(MeteorologyResources.class);</span>
+    
+<span class="fc" id="L33">    private Map&lt;String, Object&gt; localCache = new HashMap&lt;&gt;();</span>
+    
+<span class="fc" id="L35">    private int numberOfRequests = 0;</span>
+<span class="fc" id="L36">    private int hits = 0;</span>
+<span class="fc" id="L37">    private int misses = 0;</span>
+    
+    static final String CLASSWINDSPEED = &quot;classWindSpeed&quot;;
+    static final String IDWEATHERTYPE = &quot;idWeatherType&quot;;
+    static final String CLASSPRECINT = &quot;classPrecInt&quot;;
+    static final String CITIES_BASE_URL = &quot;http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/&quot;;
+    static final String URL_TERMINATION = &quot;.json&quot;;
+    
+    static final String DARK_SKY = &quot;https://api.darksky.net/forecast/7f01ccfd2bda82f95d5930bcb54a4dac/&quot;;
+    static final String DARK_SKY_TERMINATION = &quot;?exclude=currently,flags,minutely,hourly,alerts&quot;;
+    
+    private Map&lt;String, Object[]&gt; location2globalId;
+    
+    private Map&lt;Long, String&gt; weatherType2description;
+    
+    private Map&lt;Long, String&gt; windType2description;
+
+    public void setExternalApi(MeteorologyExternalApi externalApi) {
+<span class="fc" id="L55">        this.externalApi = externalApi;</span>
+<span class="fc" id="L56">    }</span>
+             
+    public Map&lt;Long, String&gt; getWeatherType2description() {
+<span class="fc" id="L59">        return weatherType2description;</span>
+    }
+
+    public Map&lt;Long, String&gt; getWindType2description() {
+<span class="fc" id="L63">        return windType2description;</span>
+    }
+       
+    public Map&lt;String, Object[]&gt; getLocation2globalId() {
+<span class="fc" id="L67">        return location2globalId;</span>
+    }
+
+    public Map&lt;String, Object&gt; getLocalCache() {
+<span class="fc" id="L71">        return localCache;</span>
+    }
+    
+    public JSONObject getJsonFromApi(String uri) throws ParseException{
+<span class="fc" id="L75">        numberOfRequests++;</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (externalApi.testConnection(uri)){</span>
+<span class="fc" id="L77">            hits++;</span>
+<span class="fc" id="L78">            return externalApi.getJSONObjectFromApi(uri);</span>
+        }
+<span class="fc" id="L80">        misses++;</span>
+<span class="fc" id="L81">        return null;</span>
+    }
+      
+    public void globalIdData() throws ParseException{
+<span class="fc" id="L85">        location2globalId = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L86">        JSONObject json = getJsonFromApi(&quot;http://api.ipma.pt/open-data/distrits-islands.json&quot;);</span>
+                
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if (json != null){</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            for (Object obj : (JSONArray) json.get(&quot;data&quot;)){</span>
+<span class="fc" id="L90">                Map&lt;String,Object&gt; temp = (Map&lt;String,Object&gt;) obj;</span>
+<span class="fc" id="L91">                numberOfRequests++;</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">                if (externalApi.testConnection(CITIES_BASE_URL + (Long) temp.get(&quot;globalIdLocal&quot;) + URL_TERMINATION)){</span>
+<span class="fc" id="L93">                    Object[] globalIdAndLatLong = new Object[] {(Long) temp.get(&quot;globalIdLocal&quot;), Float.parseFloat((String) temp.get(&quot;latitude&quot;)), Float.parseFloat((String) temp.get(&quot;longitude&quot;))};</span>
+<span class="fc" id="L94">                    location2globalId.put((String) temp.get(&quot;local&quot;), globalIdAndLatLong);</span>
+<span class="fc" id="L95">                    hits++;</span>
+<span class="fc" id="L96">                }else{</span>
+<span class="fc" id="L97">                    logger.info(&quot;Can't request from this city: {}&quot;, (String) temp.get(&quot;local&quot;));</span>
+<span class="fc" id="L98">                    misses++;</span>
+                }
+<span class="fc" id="L100">            }</span>
+        }
+<span class="fc" id="L102">    }</span>
+    
+    
+    public void windType() throws ParseException{
+<span class="fc" id="L106">        windType2description = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L107">        JSONObject json = getJsonFromApi(&quot;http://api.ipma.pt/open-data/wind-speed-daily-classe.json&quot;);</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (json != null){</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">            for (Object obj : (JSONArray) json.get(&quot;data&quot;)){</span>
+<span class="fc" id="L110">                Map&lt;String,Object&gt; temp = (Map&lt;String,Object&gt;) obj;</span>
+<span class="fc" id="L111">                windType2description.put(Long.parseLong((String) temp.get(CLASSWINDSPEED)), (String) temp.get(&quot;descClassWindSpeedDailyEN&quot;));</span>
+<span class="fc" id="L112">            }</span>
+        }
+<span class="fc" id="L114">    }</span>
+    
+    public void weatherType() throws ParseException{
+<span class="fc" id="L117">        weatherType2description = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L118">        JSONObject json = getJsonFromApi(&quot;http://api.ipma.pt/open-data/weather-type-classe.json&quot;);</span>
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">        if (json != null){</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            for (Object obj : (JSONArray) json.get(&quot;data&quot;)){</span>
+<span class="fc" id="L121">                Map&lt;String,Object&gt; temp = (Map&lt;String,Object&gt;) obj;</span>
+<span class="fc" id="L122">                weatherType2description.put((Long) temp.get(IDWEATHERTYPE), (String) temp.get(&quot;descIdWeatherTypeEN&quot;));</span>
+<span class="fc" id="L123">            }</span>
+        }
+<span class="fc" id="L125">    }</span>
+        
+    @GetMapping(&quot;all_cities&quot;)
+    public JSONArray getAllCities() throws ParseException{
+        //get global id of location passed as argument
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (location2globalId == null){</span>
+<span class="fc" id="L131">            globalIdData();</span>
+        }
+        
+        //return all cities in the api
+<span class="fc" id="L135">        JSONArray jArray = new JSONArray();</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        for (int i = 0; i &lt; location2globalId.keySet().size(); i++){</span>
+<span class="fc" id="L137">            jArray.add(location2globalId.keySet().toArray()[i]);</span>
+        }
+
+<span class="fc" id="L140">        return jArray;   </span>
+    }
+    
+    @GetMapping(&quot;weatherTypes&quot;)
+    public JSONObject getWeatherDesc() throws ParseException{
+        //get global id of location passed as argument
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (weatherType2description == null){</span>
+<span class="fc" id="L147">            weatherType();</span>
+        }
+        
+        //return all cities in the api
+<span class="fc" id="L151">        JSONObject jsonObj = new JSONObject();</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        for (int i = 0; i &lt; weatherType2description.keySet().size(); i++){</span>
+<span class="fc" id="L153">            jsonObj.put(weatherType2description.keySet().toArray()[i], weatherType2description.get(weatherType2description.keySet().toArray()[i]));</span>
+        }
+
+<span class="fc" id="L156">        return jsonObj;   </span>
+    }
+    
+    @GetMapping(&quot;windTypes&quot;)
+    public JSONObject getWindDesc() throws ParseException{
+        //get global id of location passed as argument
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">        if (windType2description == null){</span>
+<span class="fc" id="L163">            windType();</span>
+        }
+        
+        //return all cities in the api
+<span class="fc" id="L167">        JSONObject jsonObj = new JSONObject();</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        for (int i = 0; i &lt; windType2description.keySet().size(); i++){</span>
+<span class="fc" id="L169">            jsonObj.put(windType2description.keySet().toArray()[i], windType2description.get(windType2description.keySet().toArray()[i]));</span>
+        }
+
+<span class="fc" id="L172">        return jsonObj;   </span>
+    }
+    
+    @GetMapping(&quot;meteorologyInit&quot;)
+    public void initializeData() throws ParseException{
+<span class="fc" id="L177">        globalIdData();</span>
+<span class="fc" id="L178">        weatherType();</span>
+<span class="fc" id="L179">        windType();</span>
+<span class="fc" id="L180">    }</span>
+    
+    @GetMapping(&quot;get_local_data/{local}/{first_day}/{last_day}&quot;)
+    public Object getLocalData(@PathVariable(&quot;local&quot;) final String name, @PathVariable(&quot;first_day&quot;) final int first_day, @PathVariable(&quot;last_day&quot;) final int last_day) throws ParseException {
+        //days must be in [0-4]
+<span class="pc bpc" id="L185" title="2 of 8 branches missed.">        if ((!(0 &lt;= first_day &amp;&amp; first_day &lt;= 4)) || (!(0 &lt;= last_day &amp;&amp; last_day &lt;= 4))){</span>
+<span class="fc" id="L186">            JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L187">            return parser.parse(&quot;{\&quot;Error\&quot; : \&quot;The number of days must be contained in [0-4]\&quot;}&quot;);</span>
+        }
+        
+        //last day must be bigger or equal to the first day
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (first_day &gt; last_day){</span>
+<span class="fc" id="L192">            JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L193">            return parser.parse(&quot;{\&quot;Error\&quot; : \&quot;Last day must be bigger or equal to the first day\&quot;}&quot;);</span>
+        }
+        
+        //get global id of location passed as argument
+<span class="pc bpc" id="L197" title="2 of 6 branches missed.">        if (location2globalId == null || weatherType2description == null || windType2description == null){</span>
+<span class="fc" id="L198">            globalIdData();</span>
+<span class="fc" id="L199">            weatherType();</span>
+<span class="fc" id="L200">            windType();</span>
+        }
+        
+        String result;
+
+        //go to local cache and try to get the response from there
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        if (localCache.containsKey(name)){</span>
+<span class="fc" id="L207">            logger.info(&quot;[{}] CACHE &quot;, name);</span>
+
+<span class="fc" id="L209">            Map&lt;String, Object&gt; temp = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L210">            temp.put(&quot;data&quot;, ((ArrayList) localCache.get(name)).toArray());</span>
+<span class="fc" id="L211">            Gson gson = new Gson(); </span>
+<span class="fc" id="L212">            result = gson.toJson(temp);</span>
+        
+<span class="fc" id="L214">        }else{</span>
+            
+<span class="fc bfc" id="L216" title="All 2 branches covered.">            if (!location2globalId.containsKey(name)){</span>
+<span class="fc" id="L217">                JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L218">                return parser.parse(&quot;{\&quot;Error\&quot; : \&quot;City \'&quot; + name + &quot;\' not found\&quot;}&quot;);</span>
+            }
+            
+<span class="fc" id="L221">            numberOfRequests++;</span>
+<span class="fc" id="L222">            String firstApi = CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION;</span>
+            
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">            if (externalApi.testConnection(firstApi)){</span>
+                //cal impa api and get result in a String
+<span class="fc" id="L226">                result = externalApi.getStringFromApi(firstApi);            </span>
+            }else{
+<span class="nc" id="L228">                result = externalApi.getStringFromAlternativeApi(DARK_SKY + location2globalId.get(name)[1] + &quot;,&quot; + location2globalId.get(name)[2] + &quot;,&quot;, (System.currentTimeMillis() / 1000), DARK_SKY_TERMINATION);</span>
+            }
+                            
+<span class="fc" id="L231">            hits++;</span>
+
+<span class="fc" id="L233">            logger.info(&quot;[{}] API : (req-{} ; hits-{} ; misses-{})&quot;, name, numberOfRequests, hits, misses);</span>
+            //save in local cache
+<span class="fc" id="L235">            Map&lt;String, Object&gt; mapObj = new Gson().fromJson(result, new TypeToken&lt;HashMap&lt;String, Object&gt;&gt;() {}.getType());</span>
+<span class="fc" id="L236">            localCache.put(name, parseGSONObject(mapObj).get(&quot;data&quot;));</span>
+
+            //time to live
+<span class="fc" id="L239">            Timer timer = new Timer();</span>
+<span class="fc" id="L240">            timer.schedule(new TimerTask() {</span>
+              @Override
+              public void run() {
+<span class="fc" id="L243">                 localCache.remove(name);</span>
+<span class="fc" id="L244">              }</span>
+            }, 30000);  
+            
+        }
+               
+        //create api's response in json
+<span class="fc" id="L250">        JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L251">        JSONObject json = (JSONObject) parser.parse(result);</span>
+
+        //return only the 'selected' number of days
+<span class="fc" id="L254">        JSONArray jArray = new JSONArray();</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">        for (int i = first_day; i &lt;= last_day; i++){</span>
+<span class="fc" id="L256">            jArray.add(((JSONArray) json.get(&quot;data&quot;)).get(i));</span>
+        }
+        
+<span class="fc" id="L259">        return jArray;</span>
+    }
+    
+    private Map&lt;String, Object&gt; parseGSONObject(Map&lt;String,Object&gt; mapObj){
+<span class="fc bfc" id="L263" title="All 2 branches covered.">        for(int i = 0; i &lt; ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).size(); i++){</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">            if (((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).containsKey(CLASSPRECINT)){</span>
+<span class="fc" id="L265">                ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(CLASSPRECINT,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(CLASSPRECINT)).intValue());</span>
+            }
+<span class="fc" id="L267">            ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(IDWEATHERTYPE,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(IDWEATHERTYPE)).intValue());</span>
+<span class="fc" id="L268">            ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(CLASSWINDSPEED,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(CLASSWINDSPEED)).intValue());</span>
+        }
+<span class="fc" id="L270">        return mapObj;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>
