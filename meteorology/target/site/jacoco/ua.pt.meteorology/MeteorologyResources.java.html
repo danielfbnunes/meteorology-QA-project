@@ -261,8 +261,8 @@ import org.springframework.web.bind.annotation.RestController;
     
     private Map&lt;String, Object&gt; parseGSONObject(Map&lt;String,Object&gt; mapObj){
 <span class="fc bfc" id="L263" title="All 2 branches covered.">        for(int i = 0; i &lt; ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).size(); i++){</span>
-<span class="fc bfc" id="L264" title="All 2 branches covered.">            if (((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).containsKey(CLASSPRECINT)){</span>
-<span class="fc" id="L265">                ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(CLASSPRECINT,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(CLASSPRECINT)).intValue());</span>
+<span class="pc bpc" id="L264" title="1 of 2 branches missed.">            if (((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).containsKey(CLASSPRECINT)){</span>
+<span class="nc" id="L265">                ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(CLASSPRECINT,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(CLASSPRECINT)).intValue());</span>
             }
 <span class="fc" id="L267">            ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(IDWEATHERTYPE,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(IDWEATHERTYPE)).intValue());</span>
 <span class="fc" id="L268">            ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).put(CLASSWINDSPEED,((Double) ((ArrayList&lt;Map&lt;String, Object&gt;&gt;)mapObj.get(&quot;data&quot;)).get(i).get(CLASSWINDSPEED)).intValue());</span>

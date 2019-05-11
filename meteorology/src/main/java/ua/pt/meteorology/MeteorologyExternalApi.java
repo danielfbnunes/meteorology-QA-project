@@ -20,6 +20,11 @@ public class MeteorologyExternalApi {
     
     private static final String WEATHERTYPE = "idWeatherType"; 
     
+    /**
+     * Test connection to api passed as parameter.
+     * @param uri Api url.
+     * @return Boolean that indicates if the connection can be established or not.
+     */
     public boolean testConnection(String uri){
         try {
             new RestTemplate().getForObject(uri, String.class);
@@ -29,6 +34,12 @@ public class MeteorologyExternalApi {
         }
     }
     
+    /**
+     * Get JSON object from api passed as parameter.
+     * @param uri Api url.
+     * @return JSON object.
+     * @throws ParseException 
+     */
     public JSONObject getJSONObjectFromApi(String uri) throws ParseException{
         String result = new RestTemplate().getForObject(uri, String.class);
         JSONParser parser = new JSONParser();
@@ -36,10 +47,24 @@ public class MeteorologyExternalApi {
 
     }
     
+    /**
+     * Get JSON string from api passed as parameter.
+     * @param uri Api url.
+     * @return JSON string.
+     */
     public String getStringFromApi(String uri) {
         return new RestTemplate().getForObject(uri, String.class);
     }
     
+    /**
+     * Get JSON string from alternative api passed as parameter. In this api, the
+     * time is used for the previsions.
+     * @param uri Api base url.
+     * @param time Time in seconds.
+     * @param termination Url termination.
+     * @return JSON string.
+     * @throws ParseException 
+     */
     public String getStringFromAlternativeApi(String uri, long time, String termination) throws ParseException{
         JSONObject js = new JSONObject();
         js.put("data", new JSONArray());
@@ -62,6 +87,12 @@ public class MeteorologyExternalApi {
         return js.toJSONString();        
     }
     
+    /**
+     * Parse JSON from alternative api to JSON required.
+     * @param jsonInicial JSON from alternative api.
+     * @param data Forecast date of current prevision.
+     * @return JSON in the correct type.
+     */
     public JSONObject parseJSON2TypeRequired(JSONObject jsonInicial, String data){
         JSONObject jsonFinal = new JSONObject();
         jsonFinal.put("forecastDate", data);
@@ -78,6 +109,11 @@ public class MeteorologyExternalApi {
         return jsonFinal;
     }
     
+    /**
+     * Associates parameter to an idWeatherType.
+     * @param icon Description of weather from alternative api.
+     * @return idWeatherType associated to the description given.
+     */
     public int getWeatherTypeFromIcon(String icon){
         if (icon.equals("clear-day") || icon.equals("clear-night")) return 1;
         else if (icon.equals("rain")) return 6;

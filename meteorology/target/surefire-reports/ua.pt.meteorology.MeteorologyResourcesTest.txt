@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: ua.pt.meteorology.MeteorologyResourcesTest
 -------------------------------------------------------------------------------
-Tests run: 25, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 36.176 s - in ua.pt.meteorology.MeteorologyResourcesTest
+Tests run: 25, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 41.688 s - in ua.pt.meteorology.MeteorologyResourcesTest

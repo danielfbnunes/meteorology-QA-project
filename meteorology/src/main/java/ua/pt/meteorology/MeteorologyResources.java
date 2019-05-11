@@ -71,6 +71,12 @@ public class MeteorologyResources {
         return localCache;
     }
     
+    /**
+     * Request api and returns its data in JSON format.
+     * @param uri Api url.
+     * @return JSON data.
+     * @throws ParseException 
+     */
     public JSONObject getJsonFromApi(String uri) throws ParseException{
         numberOfRequests++;
         if (externalApi.testConnection(uri)){
@@ -80,7 +86,13 @@ public class MeteorologyResources {
         misses++;
         return null;
     }
-      
+    
+    /**
+     * Fills 'location2globalId' with data requested to the api. Here, we associate
+     * the local with an array made with the globalId, latitude and longitude from
+     * the local in question.
+     * @throws ParseException 
+     */
     public void globalIdData() throws ParseException{
         location2globalId = new HashMap<>();
         JSONObject json = getJsonFromApi("http://api.ipma.pt/open-data/distrits-islands.json");
@@ -101,7 +113,11 @@ public class MeteorologyResources {
         }
     }
     
-    
+    /**
+     * Fills 'windType2description' with data requested to the api. Here we
+     * associate the classWindSpeed to the description.
+     * @throws ParseException 
+     */
     public void windType() throws ParseException{
         windType2description = new HashMap<>();
         JSONObject json = getJsonFromApi("http://api.ipma.pt/open-data/wind-speed-daily-classe.json");
@@ -113,6 +129,11 @@ public class MeteorologyResources {
         }
     }
     
+    /**
+     * Fills 'weatherType2description' with data requested to the api. Here we
+     * associate the idWeatherType to the description.
+     * @throws ParseException 
+     */
     public void weatherType() throws ParseException{
         weatherType2description = new HashMap<>();
         JSONObject json = getJsonFromApi("http://api.ipma.pt/open-data/weather-type-classe.json");
@@ -123,10 +144,15 @@ public class MeteorologyResources {
             }
         }
     }
-        
+    
+    /**
+     * Maps all cities available in the url 'http://localhost:8080/all_cities'.
+     * @return JSON Array with all cities available.
+     * @throws ParseException 
+     */
     @GetMapping("all_cities")
     public JSONArray getAllCities() throws ParseException{
-        //get global id of location passed as argument
+        //fill location2globalId if null
         if (location2globalId == null){
             globalIdData();
         }
@@ -140,14 +166,19 @@ public class MeteorologyResources {
         return jArray;   
     }
     
+    /**
+     * Maps the idWeatherType to its description with the url 'http://localhost:8080/weatherTypes'.
+     * @return JSON object with the idWeatherType associated to its description.
+     * @throws ParseException 
+     */
     @GetMapping("weatherTypes")
     public JSONObject getWeatherDesc() throws ParseException{
-        //get global id of location passed as argument
+        //fill weatherType2description if null
         if (weatherType2description == null){
             weatherType();
         }
         
-        //return all cities in the api
+        //return idWeatherType associated to its description
         JSONObject jsonObj = new JSONObject();
         for (int i = 0; i < weatherType2description.keySet().size(); i++){
             jsonObj.put(weatherType2description.keySet().toArray()[i], weatherType2description.get(weatherType2description.keySet().toArray()[i]));
@@ -156,14 +187,19 @@ public class MeteorologyResources {
         return jsonObj;   
     }
     
+    /**
+     * Maps the classWindSpeed to its description with the url 'http://localhost:8080/windTypes'.
+     * @return JSON object with the classWindSpeed associated to its description.
+     * @throws ParseException 
+     */
     @GetMapping("windTypes")
     public JSONObject getWindDesc() throws ParseException{
-        //get global id of location passed as argument
+        //fill windType2description if null
         if (windType2description == null){
             windType();
         }
         
-        //return all cities in the api
+        //return classWindSpeed associated with its description
         JSONObject jsonObj = new JSONObject();
         for (int i = 0; i < windType2description.keySet().size(); i++){
             jsonObj.put(windType2description.keySet().toArray()[i], windType2description.get(windType2description.keySet().toArray()[i]));
@@ -172,6 +208,10 @@ public class MeteorologyResources {
         return jsonObj;   
     }
     
+    /**
+     * Initialize info.
+     * @throws ParseException 
+     */
     @GetMapping("meteorologyInit")
     public void initializeData() throws ParseException{
         globalIdData();
@@ -179,6 +219,15 @@ public class MeteorologyResources {
         windType();
     }
     
+    /**
+     * Returns meteorology prevision given a local and a space of time defined by
+     * a start day and an end day.
+     * @param name City in question.
+     * @param first_day Prevision starting day.
+     * @param last_day Prevision ending day.
+     * @return Returns prevision or error response.
+     * @throws ParseException 
+     */
     @GetMapping("get_local_data/{local}/{first_day}/{last_day}")
     public Object getLocalData(@PathVariable("local") final String name, @PathVariable("first_day") final int first_day, @PathVariable("last_day") final int last_day) throws ParseException {
         //days must be in [0-4]
@@ -193,7 +242,7 @@ public class MeteorologyResources {
             return parser.parse("{\"Error\" : \"Last day must be bigger or equal to the first day\"}");
         }
         
-        //get global id of location passed as argument
+        //check for null and fill with info
         if (location2globalId == null || weatherType2description == null || windType2description == null){
             globalIdData();
             weatherType();
@@ -213,6 +262,7 @@ public class MeteorologyResources {
         
         }else{
             
+            //check if city is in available cities.
             if (!location2globalId.containsKey(name)){
                 JSONParser parser = new JSONParser();
                 return parser.parse("{\"Error\" : \"City \'" + name + "\' not found\"}");
@@ -221,16 +271,19 @@ public class MeteorologyResources {
             numberOfRequests++;
             String firstApi = CITIES_BASE_URL + location2globalId.get(name)[0] + URL_TERMINATION;
             
+            //first test connection and try with impa api
             if (externalApi.testConnection(firstApi)){
-                //cal impa api and get result in a String
+                //call impa api and get result in a String
                 result = externalApi.getStringFromApi(firstApi);            
             }else{
+                //call darksky api and get result in a String
                 result = externalApi.getStringFromAlternativeApi(DARK_SKY + location2globalId.get(name)[1] + "," + location2globalId.get(name)[2] + ",", (System.currentTimeMillis() / 1000), DARK_SKY_TERMINATION);
             }
                             
             hits++;
 
             logger.info("[{}] API : (req-{} ; hits-{} ; misses-{})", name, numberOfRequests, hits, misses);
+            
             //save in local cache
             Map<String, Object> mapObj = new Gson().fromJson(result, new TypeToken<HashMap<String, Object>>() {}.getType());
             localCache.put(name, parseGSONObject(mapObj).get("data"));
@@ -259,6 +312,11 @@ public class MeteorologyResources {
         return jArray;
     }
     
+    /**
+     * Parse some elements from double to integer.
+     * @param mapObj Map with double values not converted.
+     * @return Map with double values converted to integer.
+     */
     private Map<String, Object> parseGSONObject(Map<String,Object> mapObj){
         for(int i = 0; i < ((ArrayList<Map<String, Object>>)mapObj.get("data")).size(); i++){
             if (((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).containsKey(CLASSPRECINT)){
