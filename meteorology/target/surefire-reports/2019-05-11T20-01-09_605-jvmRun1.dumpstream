@@ -1,0 +1,105 @@
+# Created at 2019-05-11T20:01:31.536
+TestSet has not finished before stream error has appeared >> initializing exit by non-null configuration: DEFAULT
+java.io.EOFException
+	at java.io.DataInputStream.readInt(DataInputStream.java:392)
+	at org.apache.maven.surefire.booter.MasterProcessCommand.decode(MasterProcessCommand.java:115)
+	at org.apache.maven.surefire.booter.CommandReader$CommandRunnable.run(CommandReader.java:391)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+# Created at 2019-05-11T20:01:31.554
+Unexpected IOException with stream: 20:01:31.553 [main] INFO ua.pt.meteorology.MeteorologyResources - Can't request from this city: Vila do Porto
+
+
+# Created at 2019-05-11T20:01:31.561
+Unexpected IOException with stream: 20:01:31.560 [Thread-1] DEBUG org.springframework.context.support.GenericApplicationContext - Closing org.springframework.context.support.GenericApplicationContext@1c7f96b1, started on Sat May 11 20:01:11 WEST 2019
+
+
+# Created at 2019-05-11T20:01:31.562
+Unexpected IOException with stream: 20:01:31.562 [main] DEBUG org.springframework.web.client.RestTemplate - HTTP GET http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/3420300.json
+
+
+# Created at 2019-05-11T20:01:31.562
+Unexpected IOException with stream: 20:01:31.562 [main] DEBUG org.springframework.web.client.RestTemplate - Accept=[text/plain, application/json, application/*+json, */*]
+
+
+# Created at 2019-05-11T20:01:31.574
+Unexpected IOException with stream: 20:01:31.574 [main] DEBUG org.springframework.web.client.RestTemplate - Response 200 OK
+
+
+# Created at 2019-05-11T20:01:31.575
+Unexpected IOException with stream: 20:01:31.574 [main] DEBUG org.springframework.web.client.RestTemplate - Reading to [java.lang.String] as "application/json"
+
+
+# Created at 2019-05-11T20:01:31.577
+Unexpected IOException with stream: 20:01:31.577 [main] DEBUG org.springframework.web.client.RestTemplate - HTTP GET http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/3430100.json
+
+
+# Created at 2019-05-11T20:01:31.578
+Unexpected IOException with stream: 20:01:31.578 [main] DEBUG org.springframework.web.client.RestTemplate - Accept=[text/plain, application/json, application/*+json, */*]
+
+
+# Created at 2019-05-11T20:01:31.590
+Unexpected IOException with stream: 20:01:31.590 [main] DEBUG org.springframework.web.client.RestTemplate - Response 200 OK
+
+
+# Created at 2019-05-11T20:01:31.591
+Unexpected IOException with stream: 20:01:31.590 [main] DEBUG org.springframework.web.client.RestTemplate - Reading to [java.lang.String] as "application/json"
+
+
+# Created at 2019-05-11T20:01:31.593
+Unexpected IOException with stream: 20:01:31.593 [main] DEBUG org.springframework.web.client.RestTemplate - HTTP GET http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/3440100.json
+
+
+# Created at 2019-05-11T20:01:31.594
+Unexpected IOException with stream: 20:01:31.594 [main] DEBUG org.springframework.web.client.RestTemplate - Accept=[text/plain, application/json, application/*+json, */*]
+
+
+# Created at 2019-05-11T20:01:31.607
+Unexpected IOException with stream: 20:01:31.607 [main] DEBUG org.springframework.web.client.RestTemplate - Response 404 NOT_FOUND
+
+
+# Created at 2019-05-11T20:01:31.608
+Unexpected IOException with stream: 20:01:31.608 [main] INFO ua.pt.meteorology.MeteorologyResources - Can't request from this city: Santa Cruz da Graciosa
+
+
+# Created at 2019-05-11T20:01:31.610
+Unexpected IOException with stream: 20:01:31.610 [main] DEBUG org.springframework.web.client.RestTemplate - HTTP GET http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/3450200.json
+
+
+# Created at 2019-05-11T20:01:31.611
+Unexpected IOException with stream: 20:01:31.611 [main] DEBUG org.springframework.web.client.RestTemplate - Accept=[text/plain, application/json, application/*+json, */*]
+
+
+# Created at 2019-05-11T20:01:31.623
+Unexpected IOException with stream: 20:01:31.623 [main] DEBUG org.springframework.web.client.RestTemplate - Response 404 NOT_FOUND
+
+
+# Created at 2019-05-11T20:01:31.624
+Unexpected IOException with stream: 20:01:31.624 [main] INFO ua.pt.meteorology.MeteorologyResources - Can't request from this city: Velas
+
+
+# Created at 2019-05-11T20:01:31.626
+Unexpected IOException with stream: 20:01:31.626 [main] DEBUG org.springframework.web.client.RestTemplate - HTTP GET http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/3460200.json
+
+
+# Created at 2019-05-11T20:01:31.627
+Unexpected IOException with stream: 20:01:31.627 [main] DEBUG org.springframework.web.client.RestTemplate - Accept=[text/plain, application/json, application/*+json, */*]
+
+
+# Created at 2019-05-11T20:01:31.640
+Unexpected IOException with stream: 20:01:31.640 [main] DEBUG org.springframework.web.client.RestTemplate - Response 404 NOT_FOUND
+
+
+# Created at 2019-05-11T20:01:31.640
+Unexpected IOException with stream: 20:01:31.640 [main] INFO ua.pt.meteorology.MeteorologyResources - Can't request from this city: Madalena
+
+
+# Created at 2019-05-11T20:01:31.643
+Unexpected IOException with stream: 20:01:31.643 [main] DEBUG org.springframework.web.client.RestTemplate - HTTP GET http://api.ipma.pt/open-data/forecast/meteorology/cities/daily/3470100.json
+
+
+# Created at 2019-05-11T20:01:31.644
+Unexpected IOException with stream: 20:01:31.643 [main] DEBUG org.springframework.web.client.RestTemplate - Accept=[text/plain, application/json, application/*+json, */*]
+
+

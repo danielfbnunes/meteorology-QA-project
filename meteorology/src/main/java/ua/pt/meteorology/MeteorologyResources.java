@@ -323,7 +323,9 @@ public class MeteorologyResources {
                 ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).put(CLASSPRECINT,((Double) ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).get(CLASSPRECINT)).intValue());
             }
             ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).put(IDWEATHERTYPE,((Double) ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).get(IDWEATHERTYPE)).intValue());
+            if (((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).containsKey(CLASSWINDSPEED)){
             ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).put(CLASSWINDSPEED,((Double) ((ArrayList<Map<String, Object>>)mapObj.get("data")).get(i).get(CLASSWINDSPEED)).intValue());
+            }
         }
         return mapObj;
     }
