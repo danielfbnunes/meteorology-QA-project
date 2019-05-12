@@ -54,8 +54,8 @@ public class SeleniumTests {
       String end_day = new Select(driver.findElement(By.id("end_day"))).getFirstSelectedOption().getText();
       driver.findElement(By.xpath("(.//*[normalize-space(text()) and normalize-space(.)='END DAY :'])[1]/following::b[1]")).click();
       assertEquals("Porto", driver.findElement(By.xpath("(.//*[normalize-space(text()) and normalize-space(.)='Get Previsions'])[1]/following::b[1]")).getText());
-      assertEquals(first_day, driver.findElement(By.xpath("(.//*[normalize-space(text()) and normalize-space(.)='Porto'])[2]/following::b[1]")).getText());
-      assertEquals(end_day, driver.findElement(By.xpath("(.//*[normalize-space(text()) and normalize-space(.)='MODERATE (E)'])[3]/following::b[2]")).getText());
+      assertEquals(first_day, driver.findElement(By.xpath("//div[@id='meteorology_div']/div/h4/b")).getText());
+      assertEquals(end_day, driver.findElement(By.xpath("//div[@id='meteorology_div']/div[5]/h4/b")).getText());
     }
 
     @After

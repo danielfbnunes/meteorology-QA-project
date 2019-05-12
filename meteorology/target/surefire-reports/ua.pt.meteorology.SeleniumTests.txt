@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: ua.pt.meteorology.SeleniumTests
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 24.375 s - in ua.pt.meteorology.SeleniumTests
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 31.401 s - in ua.pt.meteorology.SeleniumTests
