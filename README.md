@@ -1,4 +1,4 @@
-# meteorology-test-project
+# meteorology-QA-project
 
 ## Project description
 
